@@ -38,6 +38,7 @@ const PALETTE_OPTIONS: { id: PaletteId; name: string }[] = [
   { id: 'gray', name: PALETTES.gray.name },
   { id: 'sepia', name: PALETTES.sepia.name },
   { id: 'vaporwave', name: PALETTES.vaporwave.name },
+  { id: 'perler', name: PALETTES.perler.name },
 ]
 
 const DEFAULTS: PixelOptions = {

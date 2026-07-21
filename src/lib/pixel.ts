@@ -1,6 +1,6 @@
 // 像素化处理引擎：降采样、调色板量化、抖动算法
 
-export type PaletteId = 'auto' | 'gameboy' | 'nes' | 'gray' | 'sepia' | 'vaporwave'
+export type PaletteId = 'auto' | 'gameboy' | 'nes' | 'gray' | 'sepia' | 'vaporwave' | 'perler'
 
 export interface PixelOptions {
   pixelSize: number // 像素块大小
@@ -68,6 +68,35 @@ export const PALETTES: Record<Exclude<PaletteId, 'auto'>, { name: string; colors
       [5, 255, 161],
       [185, 103, 255],
       [255, 251, 150],
+    ],
+  },
+  perler: {
+    name: '拼豆 Perler',
+    colors: [
+      [0, 0, 0],         // 黑色 Black
+      [255, 255, 255],   // 白色 White
+      [196, 196, 196],   // 浅灰 Light Gray
+      [128, 128, 128],   // 灰色 Gray
+      [68, 68, 68],      // 深灰 Dark Gray
+      [207, 60, 60],     // 红色 Red
+      [180, 35, 80],     // 深红 Cranberry
+      [255, 130, 60],    // 橙色 Orange
+      [255, 200, 55],    // 黄色 Yellow
+      [255, 240, 130],   // 淡黄 Pastel Yellow
+      [85, 165, 70],     // 绿色 Green
+      [46, 125, 50],     // 深绿 Dark Green
+      [145, 210, 90],    // 浅绿 Kiwi Lime
+      [55, 130, 190],    // 蓝色 Light Blue
+      [35, 75, 155],     // 深蓝 Dark Blue
+      [0, 170, 200],     // 青蓝 Turquoise
+      [140, 70, 170],    // 紫色 Purple
+      [190, 140, 210],   // 淡紫 Lavender
+      [250, 140, 180],   // 粉色 Pink
+      [230, 55, 130],    // 品红 Magenta
+      [185, 125, 80],    // 棕色 Brown
+      [220, 175, 130],   // 浅棕 Tan
+      [255, 210, 175],   // 肤色 Peach
+      [245, 235, 220],   // 奶油 Cream
     ],
   },
 }
