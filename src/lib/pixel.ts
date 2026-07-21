@@ -73,30 +73,40 @@ export const PALETTES: Record<Exclude<PaletteId, 'auto'>, { name: string; colors
   perler: {
     name: '拼豆 Perler',
     colors: [
-      [0, 0, 0],         // 黑色 Black
-      [255, 255, 255],   // 白色 White
-      [196, 196, 196],   // 浅灰 Light Gray
-      [128, 128, 128],   // 灰色 Gray
-      [68, 68, 68],      // 深灰 Dark Gray
-      [207, 60, 60],     // 红色 Red
-      [180, 35, 80],     // 深红 Cranberry
-      [255, 130, 60],    // 橙色 Orange
-      [255, 200, 55],    // 黄色 Yellow
-      [255, 240, 130],   // 淡黄 Pastel Yellow
-      [85, 165, 70],     // 绿色 Green
-      [46, 125, 50],     // 深绿 Dark Green
-      [145, 210, 90],    // 浅绿 Kiwi Lime
-      [55, 130, 190],    // 蓝色 Light Blue
-      [35, 75, 155],     // 深蓝 Dark Blue
-      [0, 170, 200],     // 青蓝 Turquoise
-      [140, 70, 170],    // 紫色 Purple
-      [190, 140, 210],   // 淡紫 Lavender
-      [250, 140, 180],   // 粉色 Pink
-      [230, 55, 130],    // 品红 Magenta
-      [185, 125, 80],    // 棕色 Brown
-      [220, 175, 130],   // 浅棕 Tan
-      [255, 210, 175],   // 肤色 Peach
-      [245, 235, 220],   // 奶油 Cream
+      [50, 50, 52],      // Black 黑色
+      [234, 239, 238],   // White 白色
+      [144, 148, 151],   // Grey 灰色
+      [88, 92, 97],      // Dark Grey 深灰
+      [179, 186, 184],   // Light Grey 浅灰
+      [176, 53, 60],     // Red 红色
+      [157, 43, 58],     // Cherry 深红
+      [209, 67, 55],     // Tomato 番茄红
+      [235, 123, 49],    // Orange 橙色
+      [251, 177, 70],    // Cheddar 芝士黄
+      [231, 206, 62],    // Yellow 黄色
+      [233, 226, 144],   // Pastel Yellow 淡黄
+      [225, 226, 187],   // Creme 奶油
+      [77, 171, 100],    // Green 绿色
+      [0, 123, 78],      // Dark Green 深绿
+      [105, 184, 69],    // Kiwi Lime 青柠
+      [127, 151, 26],    // Fern 草绿
+      [14, 80, 146],     // Dark Blue 深蓝
+      [39, 140, 201],    // Light Blue 浅蓝
+      [74, 156, 207],    // Pastel Blue 淡蓝
+      [0, 152, 197],     // Turquoise 青蓝
+      [150, 209, 212],   // Toothpaste 牙膏绿
+      [104, 75, 134],    // Purple 紫色
+      [175, 159, 206],   // Lavender 淡紫
+      [147, 127, 191],   // Pastel Lavender 浅紫
+      [212, 84, 150],    // Pink 粉色
+      [216, 114, 154],   // Bubblegum 泡泡糖
+      [242, 175, 183],   // Flamingo 火烈鸟
+      [224, 66, 132],    // Magenta 品红
+      [103, 76, 68],     // Brown 棕色
+      [147, 104, 72],    // Light Brown 浅棕
+      [197, 172, 144],   // Tan 褐色
+      [233, 191, 185],   // Peach 肤色
+      [222, 218, 206],   // Toasted Marshmallow 米白
     ],
   },
 }
