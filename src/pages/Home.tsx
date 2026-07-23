@@ -222,9 +222,6 @@ export default function Home() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <p className="hidden font-mono text-xs text-[#8B857D] dark:text-zinc-500 sm:block">
-              图片 → 像素画 · 本地处理 · 不上传服务器
-            </p>
             <button
               onClick={toggleDark}
               className="rounded-lg p-2 text-[#8B857D] hover:text-[#1A1A1A] hover:bg-[#F5F0EB] dark:text-zinc-500 dark:hover:text-zinc-200 dark:hover:bg-zinc-800 transition-colors"
@@ -573,7 +570,7 @@ export default function Home() {
       </main>
 
       <footer className="border-t border-[#E5E0D8] dark:border-zinc-800/80 py-6 text-center text-xs text-[#8B857D] dark:text-zinc-600 space-y-1">
-        <p>像素画工坊 · 所有处理均在浏览器本地完成，图片不会离开你的设备</p>
+        <p>图片 → 像素画 · 本地处理 · 不上传服务器</p>
         <p>
           反馈 & 联系：<a href="mailto:ejuer_z@163.com" className="text-[#6B6560] dark:text-zinc-500 hover:text-amber-600 dark:hover:text-fuchsia-400 transition-colors">ejuer_z@163.com</a>
           <span className="mx-2">·</span>
