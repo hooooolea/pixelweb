@@ -452,6 +452,7 @@ export default function Home() {
               像素参数
             </div>
 
+            {mode !== 'text' && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label className="text-xs text-[#6B6560] dark:text-zinc-400">像素块大小</Label>
@@ -466,6 +467,7 @@ export default function Home() {
               />
               <p className="text-[11px] text-[#8B857D] dark:text-zinc-600">越大越抽象，越小越细腻</p>
             </div>
+            )}
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -534,6 +536,7 @@ export default function Home() {
               </div>
             )}
 
+            {mode !== 'text' && (
             <div className="flex items-center justify-between border-t border-[#E5E0D8] dark:border-zinc-800 pt-4">
               <Label className="flex items-center gap-1.5 text-xs text-[#6B6560] dark:text-zinc-400">
                 <Waves className="h-3 w-3" />
@@ -541,6 +544,7 @@ export default function Home() {
               </Label>
               <Switch checked={opts.dither} onCheckedChange={(v) => set('dither', v)} />
             </div>
+            )}
 
             <div className="flex items-center justify-between">
               <Label className="flex items-center gap-1.5 text-xs text-[#6B6560] dark:text-zinc-400">
