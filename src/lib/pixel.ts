@@ -21,6 +21,7 @@ export interface PixelOptions {
   grid: boolean // 网格线
   maxColors: number // 0=不限制，>0 时只使用出现最多的 N 种颜色
   boardGrid: boolean // 拼豆底板 29×29 网格
+  symbols: boolean // 像素块上叠加色号标注
 }
 
 type RGB = [number, number, number]
@@ -345,6 +346,32 @@ export function pixelate(source: HTMLImageElement | HTMLCanvasElement, opts: Pix
           bx * boardSize + boardSize / 2,
           by * boardSize + boardSize / 2 + Math.max(4, opts.pixelSize * 0.3)
         )
+      }
+    }
+  }
+
+  // 5.5 色号标注
+  if (opts.symbols && opts.pixelSize >= 8) {
+    const colorIndex = new Map<string, number>()
+    palette.forEach((c, i) => colorIndex.set(`${c[0]},${c[1]},${c[2]}`, i + 1))
+    const sdata = sctx.getImageData(0, 0, pw, ph)
+    octx.textAlign = 'center'
+    octx.textBaseline = 'middle'
+    const fontSize = Math.max(7, opts.pixelSize * 0.55)
+    octx.font = `bold ${fontSize}px monospace`
+    // 决定文字颜色：亮色背景用深色文字，暗色背景用白色文字
+    for (let py = 0; py < ph; py++) {
+      for (let px = 0; px < pw; px++) {
+        const pi = (py * pw + px) * 4
+        const key = `${sdata[pi]},${sdata[pi + 1]},${sdata[pi + 2]}`
+        const idx = colorIndex.get(key)
+        if (idx === undefined) continue
+        const cx = px * opts.pixelSize + opts.pixelSize / 2
+        const cy = py * opts.pixelSize + opts.pixelSize / 2
+        // 自动选择对比色
+        const lum = sdata[pi] * 0.299 + sdata[pi + 1] * 0.587 + sdata[pi + 2] * 0.114
+        octx.fillStyle = lum > 128 ? 'rgba(0,0,0,0.75)' : 'rgba(255,255,255,0.85)'
+        octx.fillText(String(idx), cx, cy)
       }
     }
   }

@@ -14,6 +14,7 @@ import {
   Download,
   Eye,
   Grid3X3,
+  Hash,
   ImagePlus,
   LayoutGrid,
   Moon,
@@ -52,6 +53,7 @@ const DEFAULTS: PixelOptions = {
   grid: false,
   maxColors: 0,
   boardGrid: false,
+  symbols: false,
 }
 
 function useDark() {
@@ -328,6 +330,16 @@ export default function Home() {
               </Label>
               <Switch checked={opts.grid} onCheckedChange={(v) => set('grid', v)} />
             </div>
+
+            {opts.palette !== 'auto' && (
+              <div className="flex items-center justify-between">
+                <Label className="flex items-center gap-1.5 text-xs text-[#6B6560] dark:text-zinc-400">
+                  <Hash className="h-3 w-3" />
+                  色号标注
+                </Label>
+                <Switch checked={opts.symbols} onCheckedChange={(v) => set('symbols', v)} />
+              </div>
+            )}
 
             {opts.palette === 'perler' && (
               <div className="flex items-center justify-between">
