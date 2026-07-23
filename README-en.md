@@ -18,17 +18,20 @@
 
 - Upload any image and convert to pixel art instantly
 - 7 color palettes: Auto / Game Boy / NES / Grayscale / Sepia / Vaporwave / **Perler**
-- Perler mode uses real Perler brand RGB values for printable bead patterns
+- Perler mode uses real Perler brand RGB values matching physical beads
+- **Bead Count** — auto-calculates how many beads of each color you need
+- **Color Limiter** — restrict to top N most-used colors
+- **Color Substitution** — shows nearest alternative when a color runs out
+- **Board Preview** — 29×29 standard Perler board grid overlay
 - Adjustable pixel size from 2px to 64px
 - Floyd–Steinberg dithering
-- Grid overlay for bead-by-bead pattern making
 - Dark / Light theme with auto-saved preference
 - All processing is local — images never leave your device
 - Export PNG at 1x / 2x / 4x resolution
 
 ## Perler Beads Mode
 
-Select the **Perler** palette, enable grid lines, and download — you'll get a ready-to-use bead pattern. Every pixel maps to a real bead color.
+Select the **Perler** palette → limit colors → enable board grid → download. Ready-to-use bead pattern with exact color matching.
 
 > Colors sourced from the [official Perler color chart](https://oneimage.co/blogs/bead-brands-color-guide/)
 
