@@ -90,13 +90,14 @@ export default function Home() {
   const [mode, setMode] = useState<'image' | 'text'>('image')
   const [textInput, setTextInput] = useState('HELLO')
   const [textSize, setTextSize] = useState(8)
+  const [textColors, setTextColors] = useState<'bw' | 'random'>('bw')
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const resultCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [colorCounts, setColorCounts] = useState<BeadCount[]>([])
 
-  const renderTextToCanvas = useCallback((text: string, size: number): HTMLCanvasElement => {
+  const renderTextToCanvas = useCallback((text: string, size: number, colors: 'bw' | 'random'): HTMLCanvasElement => {
     const c = document.createElement('canvas')
     const ctx = c.getContext('2d')!
     ctx.imageSmoothingEnabled = false
@@ -108,19 +109,35 @@ export default function Home() {
     c.height = Math.max(1, Math.ceil(lines.length * charH + size * 0.5))
     ctx.fillStyle = '#FFFFFF'
     ctx.fillRect(0, 0, c.width, c.height)
-    ctx.fillStyle = '#000000'
     ctx.font = `bold ${size}px monospace`
     ctx.textBaseline = 'top'
     ctx.textAlign = 'left'
-    lines.forEach((line, i) => {
-      ctx.fillText(line, size * 0.2, i * charH + size * 0.2)
-    })
+    if (colors === 'random') {
+      const palette = [
+        '#E74C3C', '#E67E22', '#F1C40F', '#2ECC71', '#1ABC9C',
+        '#3498DB', '#9B59B6', '#E91E63', '#FF6F00', '#00BCD4',
+        '#4CAF50', '#FF5722', '#673AB7', '#009688', '#795548',
+      ]
+      lines.forEach((line, i) => {
+        let x = size * 0.2
+        for (const ch of line) {
+          ctx.fillStyle = palette[Math.floor(Math.random() * palette.length)]
+          ctx.fillText(ch, x, i * charH + size * 0.2)
+          x += ctx.measureText(ch).width
+        }
+      })
+    } else {
+      ctx.fillStyle = '#000000'
+      lines.forEach((line, i) => {
+        ctx.fillText(line, size * 0.2, i * charH + size * 0.2)
+      })
+    }
     return c
   }, [])
 
   useEffect(() => {
     if (mode === 'text') {
-      setSource(renderTextToCanvas(textInput, textSize))
+      setSource(renderTextToCanvas(textInput, textSize, textColors))
       setIsSample(false)
     } else if (!source || isSample) {
       setSource(createSampleImage())
@@ -129,10 +146,10 @@ export default function Home() {
 
   useEffect(() => {
     if (mode === 'text') {
-      setSource(renderTextToCanvas(textInput, textSize))
+      setSource(renderTextToCanvas(textInput, textSize, textColors))
       setFileName('文字拼豆')
     }
-  }, [textInput, textSize])
+  }, [textInput, textSize, textColors])
 
   useEffect(() => {
     setSource(createSampleImage())
@@ -315,6 +332,31 @@ export default function Home() {
                     value={[textSize]}
                     onValueChange={([v]) => setTextSize(v)}
                   />
+                </div>
+                <div className="mt-3">
+                  <Label className="text-xs text-[#6B6560] dark:text-zinc-400 mb-1.5 block">配色</Label>
+                  <div className="flex gap-1.5">
+                    <button
+                      onClick={() => setTextColors('bw')}
+                      className={`flex-1 rounded-md py-1.5 text-xs font-medium transition-colors ${
+                        textColors === 'bw'
+                          ? 'bg-gray-800 text-white dark:bg-white dark:text-black'
+                          : 'bg-[#F5F0EB] text-[#8B857D] dark:bg-zinc-800 dark:text-zinc-500'
+                      }`}
+                    >
+                      黑白
+                    </button>
+                    <button
+                      onClick={() => setTextColors('random')}
+                      className={`flex-1 rounded-md py-1.5 text-xs font-medium transition-colors ${
+                        textColors === 'random'
+                          ? 'bg-amber-600 text-white dark:bg-fuchsia-600'
+                          : 'bg-[#F5F0EB] text-[#8B857D] dark:bg-zinc-800 dark:text-zinc-500'
+                      }`}
+                    >
+                      彩虹
+                    </button>
+                  </div>
                 </div>
               </>
             )}
