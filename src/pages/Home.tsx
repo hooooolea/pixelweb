@@ -374,15 +374,16 @@ export default function Home() {
             </Button>
           </div>
 
-          {colorCounts.length > 0 && opts.palette !== 'auto' && (() => {
-            const palette = PALETTES[opts.palette as Exclude<PaletteId, 'auto'>].colors
-            const subs = getSubstitutions(palette)
+          {colorCounts.length > 0 && (() => {
+            const isAuto = opts.palette === 'auto'
+            const palette = isAuto ? colorCounts.map(c => c.color) : PALETTES[opts.palette as Exclude<PaletteId, 'auto'>].colors
+            const subs = isAuto ? new Map() : getSubstitutions(palette)
             return (
             <div className="rounded-xl border border-[#E5E0D8] dark:border-zinc-800 bg-white dark:bg-zinc-900/60 p-5 shadow-sm">
               <div className="flex items-center gap-2 text-sm font-semibold text-[#6B6560] dark:text-zinc-300 mb-3">
-                珠子用量
+                {isAuto ? '颜色统计' : '珠子用量'}
                 <span className="ml-auto text-xs font-normal text-[#8B857D] dark:text-zinc-500">
-                  {colorCounts.reduce((s, c) => s + c.count, 0)} 颗 · {colorCounts.length} 色
+                  {colorCounts.reduce((s, c) => s + c.count, 0)} 像素 · {colorCounts.length} 色
                 </span>
               </div>
               <div className="space-y-1.5 max-h-56 overflow-y-auto">
