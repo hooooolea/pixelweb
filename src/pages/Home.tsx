@@ -79,6 +79,17 @@ function useDark() {
   return [dark, () => setDark((d: boolean) => !d)] as const
 }
 
+const COLOR_SCHEMES: Record<string, string[]> = {
+  bw: ['#000000'],
+  rainbow: ['#E74C3C','#E67E22','#F1C40F','#2ECC71','#1ABC9C','#3498DB','#9B59B6','#E91E63'],
+  morandi: ['#C2A89E','#A8B5A2','#9B9E8D','#B8A9C9','#D4A5A5','#A5B8D4','#C9B8A8','#B5C9B5'],
+  contrast: ['#FF0000','#00FF00','#0000FF','#FF00FF','#FFFF00','#00FFFF','#FF6600','#6600FF'],
+  candy: ['#FFB3BA','#FFDFBA','#FFFFBA','#BAFFC9','#BAE1FF','#E8BAFF','#FFB3DE','#B3FFE0'],
+  forest: ['#2D5A27','#4A7C3F','#6B8E4E','#8B9E6B','#3D5C3A','#5C7C4A','#7C9C5A','#4A6B3A'],
+}
+
+const FALLBACK: [number,number,number][] = [[0,0,0],[255,255,255],[255,0,0],[0,255,0],[0,0,255],[255,255,0],[255,0,255],[0,255,255]]
+
 export default function Home() {
   const [source, setSource] = useState<HTMLImageElement | HTMLCanvasElement | null>(null)
   const [fileName, setFileName] = useState('示例图片')
@@ -93,14 +104,6 @@ export default function Home() {
   const [textSize, setTextSize] = useState(8)
   const [textColors, setTextColors] = useState<'bw' | 'rainbow' | 'morandi' | 'contrast' | 'candy' | 'forest'>('bw')
 
-  const COLOR_SCHEMES: Record<string, string[]> = {
-    bw: ['#000000'],
-    rainbow: ['#E74C3C','#E67E22','#F1C40F','#2ECC71','#1ABC9C','#3498DB','#9B59B6','#E91E63'],
-    morandi: ['#C2A89E','#A8B5A2','#9B9E8D','#B8A9C9','#D4A5A5','#A5B8D4','#C9B8A8','#B5C9B5'],
-    contrast: ['#FF0000','#00FF00','#0000FF','#FF00FF','#FFFF00','#00FFFF','#FF6600','#6600FF'],
-    candy: ['#FFB3BA','#FFDFBA','#FFFFBA','#BAFFC9','#BAE1FF','#E8BAFF','#FFB3DE','#B3FFE0'],
-    forest: ['#2D5A27','#4A7C3F','#6B8E4E','#8B9E6B','#3D5C3A','#5C7C4A','#7C9C5A','#4A6B3A'],
-  }
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const resultCanvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -154,7 +157,7 @@ export default function Home() {
       setSource(renderTextToCanvas(textInput, textSize, COLOR_SCHEMES[textColors]))
       setFileName('文字拼豆')
     }
-  }, [textInput, textSize, textColors, COLOR_SCHEMES])
+  }, [textInput, textSize, textColors])
 
   useEffect(() => {
     setSource(createSampleImage())
@@ -174,17 +177,9 @@ export default function Home() {
       sctx.drawImage(source, 0, 0)
       const img = sctx.getImageData(0, 0, tw, th)
       const palette = opts.palette === 'auto'
-        ? Array.from(new Map(colorCounts.length > 0 ? colorCounts.map(c => [`${c.color[0]},${c.color[1]},${c.color[2]}`, c.color] as const) : [])).map(([, v]) => v)
+        ? FALLBACK
         : PALETTES[opts.palette as Exclude<PaletteId, 'auto'>].colors
-      if (palette.length === 0) {
-        // Default palette for auto mode with no prior counts
-        const fallbackPalette: [number,number,number][] = [
-          [0,0,0],[255,255,255],[255,0,0],[0,255,0],[0,0,255],[255,255,0],[255,0,255],[0,255,255]
-        ]
-        applyPalette(img, fallbackPalette, false)
-      } else {
-        applyPalette(img, palette, false)
-      }
+      applyPalette(img, palette, false)
       sctx.putImageData(img, 0, 0)
       // Draw grid
       if (opts.grid) {
