@@ -363,13 +363,13 @@ export function pixelate(source: HTMLImageElement | HTMLCanvasElement, opts: Pix
     for (let py = 0; py < ph; py++) {
       for (let px = 0; px < pw; px++) {
         const pi = (py * pw + px) * 4
-        const key = `${sdata[pi]},${sdata[pi + 1]},${sdata[pi + 2]}`
+        const d = sdata.data
+        const key = `${d[pi]},${d[pi + 1]},${d[pi + 2]}`
         const idx = colorIndex.get(key)
         if (idx === undefined) continue
         const cx = px * opts.pixelSize + opts.pixelSize / 2
         const cy = py * opts.pixelSize + opts.pixelSize / 2
-        // 自动选择对比色
-        const lum = sdata[pi] * 0.299 + sdata[pi + 1] * 0.587 + sdata[pi + 2] * 0.114
+        const lum = d[pi] * 0.299 + d[pi + 1] * 0.587 + d[pi + 2] * 0.114
         octx.fillStyle = lum > 128 ? 'rgba(0,0,0,0.75)' : 'rgba(255,255,255,0.85)'
         octx.fillText(String(idx), cx, cy)
       }
