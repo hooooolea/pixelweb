@@ -15,6 +15,7 @@ import {
   Eye,
   Grid3X3,
   ImagePlus,
+  LayoutGrid,
   Moon,
   Palette,
   RefreshCw,
@@ -25,6 +26,7 @@ import {
 } from 'lucide-react'
 import {
   createSampleImage,
+  getSubstitutions,
   pixelate,
   PALETTES,
   type BeadCount,
@@ -48,6 +50,8 @@ const DEFAULTS: PixelOptions = {
   palette: 'auto',
   dither: false,
   grid: false,
+  maxColors: 0,
+  boardGrid: false,
 }
 
 function useDark() {
@@ -274,7 +278,7 @@ export default function Home() {
               )}
             </div>
 
-            {opts.palette === 'auto' && (
+            {opts.palette === 'auto' ? (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label className="text-xs text-[#6B6560] dark:text-zinc-400">颜色数量</Label>
@@ -287,6 +291,25 @@ export default function Home() {
                   value={[opts.colorCount]}
                   onValueChange={([v]) => set('colorCount', v)}
                 />
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-[#6B6560] dark:text-zinc-400">限定用色</Label>
+                  <span className="font-mono text-xs text-amber-600 dark:text-fuchsia-400">
+                    {opts.maxColors > 0 ? `${opts.maxColors} 色` : '全部'}
+                  </span>
+                </div>
+                <Slider
+                  min={0}
+                  max={PALETTES[opts.palette as Exclude<PaletteId, 'auto'>].colors.length}
+                  step={1}
+                  value={[opts.maxColors]}
+                  onValueChange={([v]) => set('maxColors', v)}
+                />
+                <p className="text-[11px] text-[#8B857D] dark:text-zinc-600">
+                  {opts.maxColors > 0 ? `只用出现最多的 ${opts.maxColors} 种颜色` : '使用全部颜色'}
+                </p>
               </div>
             )}
 
@@ -305,6 +328,16 @@ export default function Home() {
               </Label>
               <Switch checked={opts.grid} onCheckedChange={(v) => set('grid', v)} />
             </div>
+
+            {opts.palette === 'perler' && (
+              <div className="flex items-center justify-between">
+                <Label className="flex items-center gap-1.5 text-xs text-[#6B6560] dark:text-zinc-400">
+                  <LayoutGrid className="h-3 w-3" />
+                  底板预览 (29×29)
+                </Label>
+                <Switch checked={opts.boardGrid} onCheckedChange={(v) => set('boardGrid', v)} />
+              </div>
+            )}
           </div>
 
           <div className="space-y-3 rounded-xl border border-[#E5E0D8] dark:border-zinc-800 bg-white dark:bg-zinc-900/60 p-5 shadow-sm">
@@ -341,30 +374,45 @@ export default function Home() {
             </Button>
           </div>
 
-          {colorCounts.length > 0 && opts.palette !== 'auto' && (
+          {colorCounts.length > 0 && opts.palette !== 'auto' && (() => {
+            const palette = PALETTES[opts.palette as Exclude<PaletteId, 'auto'>].colors
+            const subs = getSubstitutions(palette)
+            return (
             <div className="rounded-xl border border-[#E5E0D8] dark:border-zinc-800 bg-white dark:bg-zinc-900/60 p-5 shadow-sm">
               <div className="flex items-center gap-2 text-sm font-semibold text-[#6B6560] dark:text-zinc-300 mb-3">
-                <span className="text-xs">🧩</span>
                 珠子用量
                 <span className="ml-auto text-xs font-normal text-[#8B857D] dark:text-zinc-500">
-                  {colorCounts.reduce((s, c) => s + c.count, 0)} 颗
+                  {colorCounts.reduce((s, c) => s + c.count, 0)} 颗 · {colorCounts.length} 色
                 </span>
               </div>
-              <div className="space-y-1 max-h-48 overflow-y-auto">
-                {colorCounts.map((bc, i) => (
+              <div className="space-y-1.5 max-h-56 overflow-y-auto">
+                {colorCounts.map((bc, i) => {
+                  const key = `${bc.color[0]},${bc.color[1]},${bc.color[2]}`
+                  const sub = subs.get(key)
+                  return (
                   <div key={i} className="flex items-center gap-2 text-xs">
                     <span
-                      className="h-3.5 w-3.5 rounded-sm border border-black/10 dark:border-white/10 shrink-0"
+                      className="h-4 w-4 rounded-sm border border-black/10 dark:border-white/10 shrink-0"
                       style={{ backgroundColor: `rgb(${bc.color[0]},${bc.color[1]},${bc.color[2]})` }}
                     />
                     <span className="text-[#6B6560] dark:text-zinc-400 w-7 text-right font-mono">{bc.count}</span>
-                    <span className="text-[#8B857D] dark:text-zinc-500">颗</span>
-                    <span className="text-[#8B857D] dark:text-zinc-600 ml-auto">{bc.percentage}%</span>
+                    <span className="text-[#8B857D] dark:text-zinc-500">{bc.percentage}%</span>
+                    {sub && (
+                      <span className="ml-auto text-[#8B857D] dark:text-zinc-600 flex items-center gap-1">
+                        缺货用 →
+                        <span
+                          className="h-3 w-3 rounded-sm border border-black/10 dark:border-white/10 inline-block"
+                          style={{ backgroundColor: `rgb(${sub[0]},${sub[1]},${sub[2]})` }}
+                        />
+                      </span>
+                    )}
                   </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
-          )}
+            )
+          })()}
         </aside>
 
         {/* 预览区 */}

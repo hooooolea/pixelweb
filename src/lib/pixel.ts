@@ -15,10 +15,12 @@ export interface PixelResult {
 
 export interface PixelOptions {
   pixelSize: number // 像素块大小
-  colorCount: number // 自动模式下的颜色数
+  colorCount: number // 自动模式下的颜色数 / 固定调色板时限制用色数
   palette: PaletteId
   dither: boolean // Floyd–Steinberg 抖动
   grid: boolean // 网格线
+  maxColors: number // 0=不限制，>0 时只使用出现最多的 N 种颜色
+  boardGrid: boolean // 拼豆底板 29×29 网格
 }
 
 type RGB = [number, number, number]
@@ -277,6 +279,15 @@ export function pixelate(source: HTMLImageElement | HTMLCanvasElement, opts: Pix
       ? medianCut(img.data, opts.colorCount)
       : PALETTES[opts.palette].colors
   applyPalette(img, palette, opts.dither)
+
+  // 颜色限制：只保留出现最多的 N 种颜色
+  if (opts.maxColors > 0 && opts.maxColors < palette.length) {
+    const topColors = countColors(img.data)
+      .slice(0, opts.maxColors)
+      .map(c => c.color)
+    remapToColors(img, topColors)
+  }
+
   sctx.putImageData(img, 0, 0)
 
   // 3. 最近邻放大
@@ -303,10 +314,73 @@ export function pixelate(source: HTMLImageElement | HTMLCanvasElement, opts: Pix
     octx.stroke()
   }
 
-  // 5. 统计颜色数量
+  // 5. 拼豆底板网格 (29×29)
+  if (opts.boardGrid) {
+    const boardSize = 29 * opts.pixelSize
+    // 底板边界
+    octx.strokeStyle = 'rgba(255,140,0,0.5)'
+    octx.lineWidth = 2
+    for (let bx = 0; bx <= out.width; bx += boardSize) {
+      octx.beginPath()
+      octx.moveTo(bx + 0.5, 0)
+      octx.lineTo(bx + 0.5, out.height)
+      octx.stroke()
+    }
+    for (let by = 0; by <= out.height; by += boardSize) {
+      octx.beginPath()
+      octx.moveTo(0, by + 0.5)
+      octx.lineTo(out.width, by + 0.5)
+      octx.stroke()
+    }
+    // 底板数量标注
+    const bxCount = Math.ceil(out.width / boardSize)
+    const byCount = Math.ceil(out.height / boardSize)
+    octx.font = `${Math.max(10, opts.pixelSize * 0.8)}px monospace`
+    octx.fillStyle = 'rgba(255,140,0,0.8)'
+    octx.textAlign = 'center'
+    for (let bx = 0; bx < bxCount; bx++) {
+      for (let by = 0; by < byCount; by++) {
+        octx.fillText(
+          `${bx + 1},${by + 1}`,
+          bx * boardSize + boardSize / 2,
+          by * boardSize + boardSize / 2 + Math.max(4, opts.pixelSize * 0.3)
+        )
+      }
+    }
+  }
+
+  // 6. 统计颜色数量
   const colorCounts = countColors(img.data)
 
   return { canvas: out, colorCounts }
+}
+
+/** 将图像重新映射到指定的颜色列表 */
+function remapToColors(img: ImageData, colors: RGB[]): void {
+  const { data } = img
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] < 128) continue
+    const c = nearestColor(colors, data[i], data[i + 1], data[i + 2])
+    data[i] = c[0]
+    data[i + 1] = c[1]
+    data[i + 2] = c[2]
+  }
+}
+
+/** 为调色板的每个颜色找最近替代色 */
+export function getSubstitutions(palette: RGB[]): Map<string, RGB> {
+  const map = new Map<string, RGB>()
+  for (const c of palette) {
+    let best: RGB | null = null
+    let bestD = Infinity
+    for (const other of palette) {
+      if (other === c) continue
+      const d = colorDist(c, other[0], other[1], other[2])
+      if (d < bestD) { bestD = d; best = other }
+    }
+    if (best) map.set(`${c[0]},${c[1]},${c[2]}`, best)
+  }
+  return map
 }
 
 /** 统计每种颜色在像素图中的数量 */
