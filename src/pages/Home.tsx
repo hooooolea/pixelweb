@@ -194,7 +194,7 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="mx-auto grid max-w-6xl gap-6 px-4 py-6 lg:grid-cols-[320px_1fr]">
+      <main className="mx-auto grid max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[280px_1fr]">
         {/* 控制面板 */}
         <aside className="space-y-5">
           <div className="rounded-xl border border-[#E5E0D8] dark:border-zinc-800 bg-white dark:bg-zinc-900/60 p-5 shadow-sm">
