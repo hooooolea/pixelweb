@@ -1,9 +1,5 @@
 <p align="right"><a href="README.md">中文</a></p>
 
-<p align="center">
-  <img src="public/favicon.svg" width="80" />
-</p>
-
 <h1 align="center">🎨 Pixel Art Studio</h1>
 
 <p align="center">

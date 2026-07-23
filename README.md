@@ -1,9 +1,5 @@
 <p align="right"><a href="README-en.md">English</a></p>
 
-<p align="center">
-  <img src="public/favicon.svg" width="80" />
-</p>
-
 <h1 align="center">🎨 像素画工坊</h1>
 
 <p align="center">
