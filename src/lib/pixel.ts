@@ -2,6 +2,17 @@
 
 export type PaletteId = 'auto' | 'gameboy' | 'nes' | 'gray' | 'sepia' | 'vaporwave' | 'perler'
 
+export interface BeadCount {
+  color: RGB
+  count: number
+  percentage: number
+}
+
+export interface PixelResult {
+  canvas: HTMLCanvasElement
+  colorCounts: BeadCount[]
+}
+
 export interface PixelOptions {
   pixelSize: number // 像素块大小
   colorCount: number // 自动模式下的颜色数
@@ -244,7 +255,7 @@ function applyPalette(img: ImageData, palette: RGB[], dither: boolean): void {
  * 3. 用最近邻放大回原尺寸，得到锐利像素块
  * 4. 可选叠加网格线
  */
-export function pixelate(source: HTMLImageElement | HTMLCanvasElement, opts: PixelOptions): HTMLCanvasElement {
+export function pixelate(source: HTMLImageElement | HTMLCanvasElement, opts: PixelOptions): PixelResult {
   const sw = source instanceof HTMLImageElement ? source.naturalWidth : source.width
   const sh = source instanceof HTMLImageElement ? source.naturalHeight : source.height
   const pw = Math.max(1, Math.round(sw / opts.pixelSize))
@@ -292,7 +303,27 @@ export function pixelate(source: HTMLImageElement | HTMLCanvasElement, opts: Pix
     octx.stroke()
   }
 
-  return out
+  // 5. 统计颜色数量
+  const colorCounts = countColors(img.data)
+
+  return { canvas: out, colorCounts }
+}
+
+/** 统计每种颜色在像素图中的数量 */
+function countColors(data: Uint8ClampedArray): BeadCount[] {
+  const map = new Map<string, number>()
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] < 128) continue
+    const key = `${data[i]},${data[i + 1]},${data[i + 2]}`
+    map.set(key, (map.get(key) ?? 0) + 1)
+  }
+  const total = [...map.values()].reduce((a, b) => a + b, 0)
+  return [...map.entries()]
+    .map(([key, count]) => {
+      const [r, g, b] = key.split(',').map(Number)
+      return { color: [r, g, b] as RGB, count, percentage: Math.round((count / total) * 1000) / 10 }
+    })
+    .sort((a, b) => b.count - a.count)
 }
 
 /** 生成一张内置示例图（黄昏山谷），让用户不上传也能立即体验 */

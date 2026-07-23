@@ -27,6 +27,7 @@ import {
   createSampleImage,
   pixelate,
   PALETTES,
+  type BeadCount,
   type PaletteId,
   type PixelOptions,
 } from '@/lib/pixel'
@@ -83,6 +84,7 @@ export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const resultCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [colorCounts, setColorCounts] = useState<BeadCount[]>([])
 
   useEffect(() => {
     setSource(createSampleImage())
@@ -91,19 +93,21 @@ export default function Home() {
   useEffect(() => {
     if (!source || !canvasRef.current) return
     const result = pixelate(source, opts)
-    resultCanvasRef.current = result
+    resultCanvasRef.current = result.canvas
+    setColorCounts(result.colorCounts)
 
     const view = canvasRef.current
+    const outCanvas = result.canvas
     const maxW = view.parentElement?.clientWidth ?? 800
-    const scale = Math.min(1, maxW / result.width)
-    view.width = Math.round(result.width * scale)
-    view.height = Math.round(result.height * scale)
+    const scale = Math.min(1, maxW / outCanvas.width)
+    view.width = Math.round(outCanvas.width * scale)
+    view.height = Math.round(outCanvas.height * scale)
     const ctx = view.getContext('2d')!
     ctx.imageSmoothingEnabled = false
     if (showOriginal) {
       ctx.drawImage(source, 0, 0, view.width, view.height)
     } else {
-      ctx.drawImage(result, 0, 0, view.width, view.height)
+      ctx.drawImage(outCanvas, 0, 0, view.width, view.height)
     }
   }, [source, opts, showOriginal])
 
@@ -336,6 +340,31 @@ export default function Home() {
               重置参数
             </Button>
           </div>
+
+          {colorCounts.length > 0 && opts.palette !== 'auto' && (
+            <div className="rounded-xl border border-[#E5E0D8] dark:border-zinc-800 bg-white dark:bg-zinc-900/60 p-5 shadow-sm">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[#6B6560] dark:text-zinc-300 mb-3">
+                <span className="text-xs">🧩</span>
+                珠子用量
+                <span className="ml-auto text-xs font-normal text-[#8B857D] dark:text-zinc-500">
+                  {colorCounts.reduce((s, c) => s + c.count, 0)} 颗
+                </span>
+              </div>
+              <div className="space-y-1 max-h-48 overflow-y-auto">
+                {colorCounts.map((bc, i) => (
+                  <div key={i} className="flex items-center gap-2 text-xs">
+                    <span
+                      className="h-3.5 w-3.5 rounded-sm border border-black/10 dark:border-white/10 shrink-0"
+                      style={{ backgroundColor: `rgb(${bc.color[0]},${bc.color[1]},${bc.color[2]})` }}
+                    />
+                    <span className="text-[#6B6560] dark:text-zinc-400 w-7 text-right font-mono">{bc.count}</span>
+                    <span className="text-[#8B857D] dark:text-zinc-500">颗</span>
+                    <span className="text-[#8B857D] dark:text-zinc-600 ml-auto">{bc.percentage}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </aside>
 
         {/* 预览区 */}
