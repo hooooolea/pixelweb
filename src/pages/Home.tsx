@@ -90,14 +90,23 @@ export default function Home() {
   const [mode, setMode] = useState<'image' | 'text'>('image')
   const [textInput, setTextInput] = useState('HELLO')
   const [textSize, setTextSize] = useState(8)
-  const [textColors, setTextColors] = useState<'bw' | 'random'>('bw')
+  const [textColors, setTextColors] = useState<'bw' | 'rainbow' | 'morandi' | 'contrast' | 'candy' | 'forest'>('bw')
+
+  const COLOR_SCHEMES: Record<string, string[]> = {
+    bw: ['#000000'],
+    rainbow: ['#E74C3C','#E67E22','#F1C40F','#2ECC71','#1ABC9C','#3498DB','#9B59B6','#E91E63'],
+    morandi: ['#C2A89E','#A8B5A2','#9B9E8D','#B8A9C9','#D4A5A5','#A5B8D4','#C9B8A8','#B5C9B5'],
+    contrast: ['#FF0000','#00FF00','#0000FF','#FF00FF','#FFFF00','#00FFFF','#FF6600','#6600FF'],
+    candy: ['#FFB3BA','#FFDFBA','#FFFFBA','#BAFFC9','#BAE1FF','#E8BAFF','#FFB3DE','#B3FFE0'],
+    forest: ['#2D5A27','#4A7C3F','#6B8E4E','#8B9E6B','#3D5C3A','#5C7C4A','#7C9C5A','#4A6B3A'],
+  }
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const resultCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [colorCounts, setColorCounts] = useState<BeadCount[]>([])
 
-  const renderTextToCanvas = useCallback((text: string, size: number, colors: 'bw' | 'random'): HTMLCanvasElement => {
+  const renderTextToCanvas = useCallback((text: string, size: number, palette: string[]): HTMLCanvasElement => {
     const c = document.createElement('canvas')
     const ctx = c.getContext('2d')!
     ctx.imageSmoothingEnabled = false
@@ -112,12 +121,7 @@ export default function Home() {
     ctx.font = `bold ${size}px monospace`
     ctx.textBaseline = 'top'
     ctx.textAlign = 'left'
-    if (colors === 'random') {
-      const palette = [
-        '#E74C3C', '#E67E22', '#F1C40F', '#2ECC71', '#1ABC9C',
-        '#3498DB', '#9B59B6', '#E91E63', '#FF6F00', '#00BCD4',
-        '#4CAF50', '#FF5722', '#673AB7', '#009688', '#795548',
-      ]
+    if (palette.length > 1) {
       lines.forEach((line, i) => {
         let x = size * 0.2
         for (const ch of line) {
@@ -137,7 +141,7 @@ export default function Home() {
 
   useEffect(() => {
     if (mode === 'text') {
-      setSource(renderTextToCanvas(textInput, textSize, textColors))
+      setSource(renderTextToCanvas(textInput, textSize, COLOR_SCHEMES[textColors]))
       setIsSample(false)
     } else if (!source || isSample) {
       setSource(createSampleImage())
@@ -146,10 +150,10 @@ export default function Home() {
 
   useEffect(() => {
     if (mode === 'text') {
-      setSource(renderTextToCanvas(textInput, textSize, textColors))
+      setSource(renderTextToCanvas(textInput, textSize, COLOR_SCHEMES[textColors]))
       setFileName('文字拼豆')
     }
-  }, [textInput, textSize, textColors])
+  }, [textInput, textSize, textColors, COLOR_SCHEMES])
 
   useEffect(() => {
     setSource(createSampleImage())
@@ -335,27 +339,32 @@ export default function Home() {
                 </div>
                 <div className="mt-3">
                   <Label className="text-xs text-[#6B6560] dark:text-zinc-400 mb-1.5 block">配色</Label>
-                  <div className="flex gap-1.5">
-                    <button
-                      onClick={() => setTextColors('bw')}
-                      className={`flex-1 rounded-md py-1.5 text-xs font-medium transition-colors ${
-                        textColors === 'bw'
-                          ? 'bg-gray-800 text-white dark:bg-white dark:text-black'
-                          : 'bg-[#F5F0EB] text-[#8B857D] dark:bg-zinc-800 dark:text-zinc-500'
-                      }`}
-                    >
-                      黑白
-                    </button>
-                    <button
-                      onClick={() => setTextColors('random')}
-                      className={`flex-1 rounded-md py-1.5 text-xs font-medium transition-colors ${
-                        textColors === 'random'
-                          ? 'bg-amber-600 text-white dark:bg-fuchsia-600'
-                          : 'bg-[#F5F0EB] text-[#8B857D] dark:bg-zinc-800 dark:text-zinc-500'
-                      }`}
-                    >
-                      彩虹
-                    </button>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {([
+                      { key: 'bw', label: '黑白', preview: ['#000','#888'] },
+                      { key: 'rainbow', label: '彩虹', preview: ['#E74C3C','#F1C40F','#2ECC71','#3498DB'] },
+                      { key: 'morandi', label: '莫兰迪', preview: ['#C2A89E','#A8B5A2','#B8A9C9','#D4A5A5'] },
+                      { key: 'contrast', label: '对比色', preview: ['#FF0000','#00FF00','#0000FF','#FF00FF'] },
+                      { key: 'candy', label: '糖果色', preview: ['#FFB3BA','#FFDFBA','#BAE1FF','#E8BAFF'] },
+                      { key: 'forest', label: '森林', preview: ['#2D5A27','#4A7C3F','#6B8E4E','#8B9E6B'] },
+                    ] as const).map(({ key, label, preview }) => (
+                      <button
+                        key={key}
+                        onClick={() => setTextColors(key)}
+                        className={`rounded-md py-1.5 text-[11px] font-medium transition-colors ${
+                          textColors === key
+                            ? 'bg-amber-600 text-white dark:bg-fuchsia-600'
+                            : 'bg-[#F5F0EB] text-[#8B857D] dark:bg-zinc-800 dark:text-zinc-500 hover:bg-[#E5E0D8] dark:hover:bg-zinc-700'
+                        }`}
+                      >
+                        <div className="flex justify-center gap-0.5 mb-0.5">
+                          {preview.map((c, i) => (
+                            <span key={i} className="h-2 w-2 rounded-full" style={{ backgroundColor: c }} />
+                          ))}
+                        </div>
+                        {label}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </>
