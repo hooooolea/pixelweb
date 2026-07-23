@@ -15,12 +15,13 @@ import {
   Eye,
   Grid3X3,
   Hash,
-  ImagePlus,
   LayoutGrid,
   Moon,
   Palette,
   RefreshCw,
+  ImageIcon,
   Sparkles,
+  Type,
   Sun,
   Upload,
   Waves,
@@ -86,11 +87,52 @@ export default function Home() {
   const [dragOver, setDragOver] = useState(false)
   const [exportScale, setExportScale] = useState('1')
   const [dark, toggleDark] = useDark()
+  const [mode, setMode] = useState<'image' | 'text'>('image')
+  const [textInput, setTextInput] = useState('HELLO')
+  const [textSize, setTextSize] = useState(8)
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const resultCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [colorCounts, setColorCounts] = useState<BeadCount[]>([])
+
+  const renderTextToCanvas = useCallback((text: string, size: number): HTMLCanvasElement => {
+    const c = document.createElement('canvas')
+    const ctx = c.getContext('2d')!
+    ctx.imageSmoothingEnabled = false
+    const charW = size * 0.6
+    const charH = size
+    const lines = text.split('\n')
+    const maxLen = Math.max(...lines.map(l => l.length), 1)
+    c.width = Math.max(1, Math.ceil(maxLen * charW + size * 0.5))
+    c.height = Math.max(1, Math.ceil(lines.length * charH + size * 0.5))
+    ctx.fillStyle = '#FFFFFF'
+    ctx.fillRect(0, 0, c.width, c.height)
+    ctx.fillStyle = '#000000'
+    ctx.font = `bold ${size}px monospace`
+    ctx.textBaseline = 'top'
+    ctx.textAlign = 'left'
+    lines.forEach((line, i) => {
+      ctx.fillText(line, size * 0.2, i * charH + size * 0.2)
+    })
+    return c
+  }, [])
+
+  useEffect(() => {
+    if (mode === 'text') {
+      setSource(renderTextToCanvas(textInput, textSize))
+      setIsSample(false)
+    } else if (!source || isSample) {
+      setSource(createSampleImage())
+    }
+  }, [mode])
+
+  useEffect(() => {
+    if (mode === 'text') {
+      setSource(renderTextToCanvas(textInput, textSize))
+      setFileName('文字拼豆')
+    }
+  }, [textInput, textSize])
 
   useEffect(() => {
     setSource(createSampleImage())
@@ -199,32 +241,86 @@ export default function Home() {
         <aside className="space-y-5">
           <div className="rounded-xl border border-[#E5E0D8] dark:border-zinc-800 bg-white dark:bg-zinc-900/60 p-5 shadow-sm">
             <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-[#6B6560] dark:text-zinc-300">
-              <ImagePlus className="h-4 w-4 text-amber-600 dark:text-fuchsia-400" />
-              图片
+              {mode === 'image' ? (
+                <ImageIcon className="h-4 w-4 text-amber-600 dark:text-fuchsia-400" />
+              ) : (
+                <Type className="h-4 w-4 text-amber-600 dark:text-fuchsia-400" />
+              )}
+              {mode === 'image' ? '图片' : '文字'}
             </div>
-            <Button
-              variant="outline"
-              className="w-full rounded-lg border-dashed border-[#D4CDC3] dark:border-zinc-700 bg-[#FAF8F5] dark:bg-transparent hover:border-amber-500 dark:hover:border-fuchsia-500 hover:bg-amber-50 dark:hover:bg-fuchsia-500/10 text-[#6B6560] dark:text-zinc-400"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Upload className="mr-2 h-4 w-4" />
-              上传图片
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0]
-                if (f) loadFile(f)
-                e.target.value = ''
-              }}
-            />
-            <p className="mt-2 truncate text-center text-xs text-[#8B857D] dark:text-zinc-500">
-              当前：{fileName}
-              {isSample && '（可替换）'}
-            </p>
+            <div className="flex gap-1 mb-4">
+              <button
+                onClick={() => setMode('image')}
+                className={`flex-1 rounded-lg py-1.5 text-xs font-medium transition-colors ${
+                  mode === 'image'
+                    ? 'bg-amber-600 text-white dark:bg-fuchsia-600'
+                    : 'bg-[#F5F0EB] text-[#8B857D] dark:bg-zinc-800 dark:text-zinc-500'
+                }`}
+              >
+                图片
+              </button>
+              <button
+                onClick={() => setMode('text')}
+                className={`flex-1 rounded-lg py-1.5 text-xs font-medium transition-colors ${
+                  mode === 'text'
+                    ? 'bg-amber-600 text-white dark:bg-fuchsia-600'
+                    : 'bg-[#F5F0EB] text-[#8B857D] dark:bg-zinc-800 dark:text-zinc-500'
+                }`}
+              >
+                文字
+              </button>
+            </div>
+            {mode === 'image' ? (
+              <>
+                <Button
+                  variant="outline"
+                  className="w-full rounded-lg border-dashed border-[#D4CDC3] dark:border-zinc-700 bg-[#FAF8F5] dark:bg-transparent hover:border-amber-500 dark:hover:border-fuchsia-500 hover:bg-amber-50 dark:hover:bg-fuchsia-500/10 text-[#6B6560] dark:text-zinc-400"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  上传图片
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0]
+                    if (f) { loadFile(f); setIsSample(false) }
+                    e.target.value = ''
+                  }}
+                />
+                <p className="mt-2 truncate text-center text-xs text-[#8B857D] dark:text-zinc-500">
+                  当前：{fileName}
+                  {isSample && '（可替换）'}
+                </p>
+              </>
+            ) : (
+              <>
+                <textarea
+                  value={textInput}
+                  onChange={(e) => setTextInput(e.target.value)}
+                  placeholder="输入文字，支持换行"
+                  rows={3}
+                  maxLength={200}
+                  className="w-full rounded-lg border border-[#D4CDC3] dark:border-zinc-700 bg-[#FAF8F5] dark:bg-zinc-950 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-current resize-none text-[#1A1A1A] dark:text-zinc-100 placeholder:text-[#8B857D]"
+                />
+                <div className="mt-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs text-[#6B6560] dark:text-zinc-400">字号</Label>
+                    <span className="font-mono text-xs text-amber-600 dark:text-fuchsia-400">{textSize}px</span>
+                  </div>
+                  <Slider
+                    min={4}
+                    max={32}
+                    step={1}
+                    value={[textSize]}
+                    onValueChange={([v]) => setTextSize(v)}
+                  />
+                </div>
+              </>
+            )}
           </div>
 
           <div className="space-y-5 rounded-xl border border-[#E5E0D8] dark:border-zinc-800 bg-white dark:bg-zinc-900/60 p-5 shadow-sm">
