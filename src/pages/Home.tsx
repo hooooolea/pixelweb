@@ -30,6 +30,7 @@ import {
   applyPalette,
   createSampleImage,
   getSubstitutions,
+  medianCut,
   pixelate,
   PALETTES,
   type BeadCount,
@@ -88,8 +89,6 @@ const COLOR_SCHEMES: Record<string, string[]> = {
   forest: ['#2D5A27','#4A7C3F','#6B8E4E','#8B9E6B','#3D5C3A','#5C7C4A','#7C9C5A','#4A6B3A'],
 }
 
-const FALLBACK: [number,number,number][] = [[0,0,0],[255,255,255],[255,0,0],[0,255,0],[0,0,255],[255,255,0],[255,0,255],[0,255,255]]
-
 export default function Home() {
   const [source, setSource] = useState<HTMLImageElement | HTMLCanvasElement | null>(null)
   const [fileName, setFileName] = useState('示例图片')
@@ -101,7 +100,7 @@ export default function Home() {
   const [dark, toggleDark] = useDark()
   const [mode, setMode] = useState<'image' | 'text'>('image')
   const [textInput, setTextInput] = useState('HELLO')
-  const [textSize, setTextSize] = useState(8)
+  const [textSize, setTextSize] = useState(14)
   const [textColors, setTextColors] = useState<'bw' | 'rainbow' | 'morandi' | 'contrast' | 'candy' | 'forest'>('bw')
 
 
@@ -177,7 +176,7 @@ export default function Home() {
       sctx.drawImage(source, 0, 0)
       const img = sctx.getImageData(0, 0, tw, th)
       const palette = opts.palette === 'auto'
-        ? FALLBACK
+        ? medianCut(img.data, opts.colorCount)
         : PALETTES[opts.palette as Exclude<PaletteId, 'auto'>].colors
       applyPalette(img, palette, false)
       sctx.putImageData(img, 0, 0)
