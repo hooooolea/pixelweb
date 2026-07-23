@@ -351,7 +351,7 @@ export function pixelate(source: HTMLImageElement | HTMLCanvasElement, opts: Pix
   }
 
   // 5.5 色号标注
-  if (opts.symbols && opts.pixelSize >= 8) {
+  if (opts.symbols && opts.pixelSize >= 4) {
     const colorIndex = new Map<string, number>()
     palette.forEach((c, i) => colorIndex.set(`${c[0]},${c[1]},${c[2]}`, i + 1))
     const sdata = sctx.getImageData(0, 0, pw, ph)

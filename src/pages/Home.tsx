@@ -196,7 +196,7 @@ export default function Home() {
         const colorIndex = new Map(palette.map((c, i) => [`${c[0]},${c[1]},${c[2]}`, i + 1]))
         const d2 = sctx.getImageData(0, 0, tw, th)
         gctx2.textAlign = 'center'; gctx2.textBaseline = 'middle'
-        const fs = Math.max(6, 10)
+        const fs = Math.max(7, Math.min(14, tw * 0.6))
         gctx2.font = `bold ${fs}px monospace`
         for (let py = 0; py < th; py++) {
           for (let px = 0; px < tw; px++) {
