@@ -27,6 +27,7 @@ import {
   Waves,
 } from 'lucide-react'
 import {
+  applyPalette,
   createSampleImage,
   getSubstitutions,
   pixelate,
@@ -161,24 +162,104 @@ export default function Home() {
 
   useEffect(() => {
     if (!source || !canvasRef.current) return
-    const result = pixelate(source, opts)
-    resultCanvasRef.current = result.canvas
-    setColorCounts(result.colorCounts)
-
     const view = canvasRef.current
-    const outCanvas = result.canvas
-    const maxW = view.parentElement?.clientWidth ?? 800
-    const scale = Math.min(1, maxW / outCanvas.width)
-    view.width = Math.round(outCanvas.width * scale)
-    view.height = Math.round(outCanvas.height * scale)
-    const ctx = view.getContext('2d')!
-    ctx.imageSmoothingEnabled = false
-    if (showOriginal) {
-      ctx.drawImage(source, 0, 0, view.width, view.height)
+
+    if (mode === 'text') {
+      // Text mode: no pixelation — render text directly, quantize to palette
+      const tw = source instanceof HTMLCanvasElement ? source.width : (source as HTMLImageElement).naturalWidth
+      const th = source instanceof HTMLCanvasElement ? source.height : (source as HTMLImageElement).naturalHeight
+      const small = document.createElement('canvas')
+      small.width = tw; small.height = th
+      const sctx = small.getContext('2d')!
+      sctx.drawImage(source, 0, 0)
+      const img = sctx.getImageData(0, 0, tw, th)
+      const palette = opts.palette === 'auto'
+        ? Array.from(new Map(colorCounts.length > 0 ? colorCounts.map(c => [`${c.color[0]},${c.color[1]},${c.color[2]}`, c.color] as const) : [])).map(([, v]) => v)
+        : PALETTES[opts.palette as Exclude<PaletteId, 'auto'>].colors
+      if (palette.length === 0) {
+        // Default palette for auto mode with no prior counts
+        const fallbackPalette: [number,number,number][] = [
+          [0,0,0],[255,255,255],[255,0,0],[0,255,0],[0,0,255],[255,255,0],[255,0,255],[0,255,255]
+        ]
+        applyPalette(img, fallbackPalette, false)
+      } else {
+        applyPalette(img, palette, false)
+      }
+      sctx.putImageData(img, 0, 0)
+      // Draw grid
+      if (opts.grid) {
+        const gctx = small.getContext('2d')!
+        gctx.strokeStyle = 'rgba(0,0,0,0.18)'
+        gctx.lineWidth = 1
+        gctx.beginPath()
+        for (let x = 0; x <= tw; x++) { gctx.moveTo(x + 0.5, 0); gctx.lineTo(x + 0.5, th) }
+        for (let y = 0; y <= th; y++) { gctx.moveTo(0, y + 0.5); gctx.lineTo(tw, y + 0.5) }
+        gctx.stroke()
+      }
+      // Draw symbols
+      if (opts.symbols && palette.length > 0) {
+        const gctx2 = small.getContext('2d')!
+        const colorIndex = new Map(palette.map((c, i) => [`${c[0]},${c[1]},${c[2]}`, i + 1]))
+        const d2 = sctx.getImageData(0, 0, tw, th)
+        gctx2.textAlign = 'center'; gctx2.textBaseline = 'middle'
+        const fs = Math.max(6, 10)
+        gctx2.font = `bold ${fs}px monospace`
+        for (let py = 0; py < th; py++) {
+          for (let px = 0; px < tw; px++) {
+            const pi = (py * tw + px) * 4
+            const key = `${d2.data[pi]},${d2.data[pi+1]},${d2.data[pi+2]}`
+            const idx = colorIndex.get(key)
+            if (idx !== undefined) {
+              const lum = d2.data[pi] * 0.299 + d2.data[pi+1] * 0.587 + d2.data[pi+2] * 0.114
+              gctx2.fillStyle = lum > 128 ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.8)'
+              gctx2.fillText(String(idx), px + 0.5, py + 0.5)
+            }
+          }
+        }
+      }
+      resultCanvasRef.current = small
+      // Count colors
+      const colorMap = new Map<string, number>()
+      const fdata = sctx.getImageData(0, 0, tw, th)
+      for (let i = 0; i < fdata.data.length; i += 4) {
+        if (fdata.data[i+3] < 128) continue
+        const k = `${fdata.data[i]},${fdata.data[i+1]},${fdata.data[i+2]}`
+        colorMap.set(k, (colorMap.get(k) ?? 0) + 1)
+      }
+      const total = [...colorMap.values()].reduce((a, b) => a + b, 0) || 1
+      const counts: BeadCount[] = [...colorMap.entries()].map(([k, n]) => {
+        const [r, g, b] = k.split(',').map(Number)
+        return { color: [r, g, b] as [number, number, number], count: n, percentage: Math.round((n / total) * 1000) / 10 }
+      }).sort((a, b) => b.count - a.count)
+      setColorCounts(counts)
+      // Scale to fit preview
+      const maxW = view.parentElement?.clientWidth ?? 800
+      const scale = Math.min(1, maxW / tw)
+      view.width = Math.round(tw * scale)
+      view.height = Math.round(th * scale)
+      const vctx = view.getContext('2d')!
+      vctx.imageSmoothingEnabled = false
+      vctx.drawImage(small, 0, 0, view.width, view.height)
     } else {
-      ctx.drawImage(outCanvas, 0, 0, view.width, view.height)
+      // Image mode: full pixelation pipeline
+      const result = pixelate(source, opts)
+      resultCanvasRef.current = result.canvas
+      setColorCounts(result.colorCounts)
+
+      const outCanvas = result.canvas
+      const maxW = view.parentElement?.clientWidth ?? 800
+      const scale = Math.min(1, maxW / outCanvas.width)
+      view.width = Math.round(outCanvas.width * scale)
+      view.height = Math.round(outCanvas.height * scale)
+      const ctx = view.getContext('2d')!
+      ctx.imageSmoothingEnabled = false
+      if (showOriginal) {
+        ctx.drawImage(source, 0, 0, view.width, view.height)
+      } else {
+        ctx.drawImage(outCanvas, 0, 0, view.width, view.height)
+      }
     }
-  }, [source, opts, showOriginal])
+  }, [source, opts, showOriginal, mode])
 
   const loadFile = useCallback((file: File) => {
     if (!file.type.startsWith('image/')) return

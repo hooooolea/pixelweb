@@ -212,7 +212,7 @@ export function medianCut(data: Uint8ClampedArray, n: number): RGB[] {
 }
 
 /** 将图像映射到调色板，可选 Floyd–Steinberg 抖动 */
-function applyPalette(img: ImageData, palette: RGB[], dither: boolean): void {
+export function applyPalette(img: ImageData, palette: RGB[], dither: boolean): void {
   const { data, width, height } = img
   if (!dither) {
     for (let i = 0; i < data.length; i += 4) {
