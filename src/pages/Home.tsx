@@ -226,11 +226,11 @@ export default function Home() {
         return { color: [r, g, b] as [number, number, number], count: n, percentage: Math.round((n / total) * 1000) / 10 }
       }).sort((a, b) => b.count - a.count)
       setColorCounts(counts)
-      // Scale to fit preview
+      // Upscale to fill preview (at least textSize pixels per bead)
       const maxW = view.parentElement?.clientWidth ?? 800
-      const scale = Math.min(1, maxW / tw)
-      view.width = Math.round(tw * scale)
-      view.height = Math.round(th * scale)
+      const upscale = Math.max(4, Math.floor(Math.min(maxW / tw, 600 / th)))
+      view.width = tw * upscale
+      view.height = th * upscale
       const vctx = view.getContext('2d')!
       vctx.imageSmoothingEnabled = false
       vctx.drawImage(small, 0, 0, view.width, view.height)
