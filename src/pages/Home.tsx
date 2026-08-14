@@ -206,8 +206,9 @@ export default function Home() {
     const maxW = view.parentElement?.clientWidth ?? 800
 
     if (mode === 'text') {
-      // 文字输出尺寸较小，需要显著放大以便预览可读
-      const upscale = Math.max(4, Math.floor(Math.min(maxW / outCanvas.width, 600 / outCanvas.height)))
+      // 文字按预览区大小自适应缩放（宽度和高度都约束住，长文本不会被放得过大）
+      const maxH = 520
+      const upscale = Math.max(1, Math.floor(Math.min(maxW / outCanvas.width, maxH / outCanvas.height)))
       view.width = outCanvas.width * upscale
       view.height = outCanvas.height * upscale
     } else {
