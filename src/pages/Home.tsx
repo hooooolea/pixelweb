@@ -126,8 +126,10 @@ export default function Home() {
     // 透明背景，先画文字（避免白底与文字混合产生灰色抗锯齿边）
     ctx.clearRect(0, 0, c.width, c.height)
     ctx.font = `bold ${fontSize}px monospace`
-    ctx.textBaseline = 'top'
-    ctx.textAlign = 'left'
+    ctx.textBaseline = 'middle'
+    ctx.textAlign = 'center'
+    const centerX = c.width / 2
+    const lineH = charH
     if (palette.length > 1) {
       // 用文本哈希决定起始偏移，让彩虹等配色结果可复现
       let seed = 0
@@ -137,17 +139,19 @@ export default function Home() {
         return palette[Math.floor((seed / 233280) * palette.length)]
       }
       lines.forEach((line, i) => {
-        let x = fontSize * 0.2
+        const lineWidth = ctx.measureText(line).width
+        let x = centerX - lineWidth / 2
+        const y = i * lineH + lineH / 2
         for (const ch of line) {
           ctx.fillStyle = nextColor()
-          ctx.fillText(ch, x, i * charH + fontSize * 0.2)
+          ctx.fillText(ch, x, y)
           x += ctx.measureText(ch).width
         }
       })
     } else {
       ctx.fillStyle = palette[0] ?? '#000000'
       lines.forEach((line, i) => {
-        ctx.fillText(line, fontSize * 0.2, i * charH + fontSize * 0.2)
+        ctx.fillText(line, centerX, i * lineH + lineH / 2)
       })
     }
     // 阈值处理去掉抗锯齿：透明/半透明像素 → 纯白背景，否则 → 保留颜色且完全不透明
@@ -478,7 +482,7 @@ export default function Home() {
                 </div>
                 <Slider
                   min={2}
-                  max={32}
+                  max={mode === 'text' ? 8 : 32}
                   step={1}
                   value={[opts.colorCount]}
                   onValueChange={([v]) => set('colorCount', v)}
