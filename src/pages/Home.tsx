@@ -156,15 +156,11 @@ export default function Home() {
         ctx.fillText(line, centerX, topPad + i * lineH + lineH / 2)
       })
     }
-    // 阈值处理去掉抗锯齿：透明/半透明像素 → 纯白背景，否则 → 保留颜色且完全不透明
+    // 阈值处理去掉抗锯齿：透明/半透明像素 → 保持透明，否则 → 保留颜色且完全不透明
     const idata = ctx.getImageData(0, 0, c.width, c.height)
     const d = idata.data
     for (let i = 0; i < d.length; i += 4) {
-      if (d[i + 3] < 128) {
-        d[i] = 255; d[i + 1] = 255; d[i + 2] = 255; d[i + 3] = 255
-      } else {
-        d[i + 3] = 255
-      }
+      d[i + 3] = d[i + 3] < 128 ? 0 : 255
     }
     ctx.putImageData(idata, 0, 0)
     return c
