@@ -117,21 +117,22 @@ export default function Home() {
     const ctx = c.getContext('2d', { willReadFrequently: true })!
     ctx.imageSmoothingEnabled = false
     const fontSize = size * TEXT_SCALE
-    const charW = fontSize * 0.6
-    const charH = fontSize
+    const charH = fontSize * 1.2
     const lines = text.split('\n')
-    const maxLen = Math.max(...lines.map(l => l.length), 1)
-    c.width = Math.max(1, Math.ceil(maxLen * charW + fontSize * 0.5))
+    // 用支持中文的系统字体，且先设字体再测量宽度
+    ctx.font = `bold ${fontSize}px "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif`
+    // 用 measureText 获取实际宽度（中文全角比英文宽，不能按 0.6 估算）
+    const maxLineW = Math.max(...lines.map(l => ctx.measureText(l).width), 1)
+    c.width = Math.max(1, Math.ceil(maxLineW + fontSize * 0.5))
     c.height = Math.max(1, Math.ceil(lines.length * charH + fontSize * 0.5))
     // 透明背景，先画文字（避免白底与文字混合产生灰色抗锯齿边）
     ctx.clearRect(0, 0, c.width, c.height)
-    ctx.font = `bold ${fontSize}px monospace`
     ctx.textBaseline = 'middle'
     ctx.textAlign = 'center'
     const centerX = c.width / 2
     const lineH = charH
     // 文本块（lines*charH）在画布内垂直居中：画布高度多出的 0.5*fontSize 上下各分一半
-    const topPad = fontSize * 0.35
+    const topPad = fontSize * 0.25
     if (palette.length > 1) {
       // 用文本哈希决定起始偏移，让彩虹等配色结果可复现
       let seed = 0
