@@ -202,11 +202,11 @@ export default function Home() {
     const maxW = view.parentElement?.clientWidth ?? 800
 
     if (mode === 'text') {
-      // 文字按预览区大小自适应缩放（宽度和高度都约束住，长文本不会被放得过大）
+      // 文字自适应缩放：字越多越小，始终完整显示（宽高都约束住）
       const maxH = 520
-      const upscale = Math.max(1, Math.floor(Math.min(maxW / outCanvas.width, maxH / outCanvas.height)))
-      view.width = outCanvas.width * upscale
-      view.height = outCanvas.height * upscale
+      const scale = Math.min(maxW / outCanvas.width, maxH / outCanvas.height)
+      view.width = Math.max(1, Math.round(outCanvas.width * scale))
+      view.height = Math.max(1, Math.round(outCanvas.height * scale))
     } else {
       const scale = Math.min(1, maxW / outCanvas.width)
       view.width = Math.round(outCanvas.width * scale)
