@@ -27,10 +27,8 @@ import {
   Waves,
 } from 'lucide-react'
 import {
-  applyPalette,
   createSampleImage,
   getSubstitutions,
-  medianCut,
   pixelate,
   PALETTES,
   type BeadCount,
@@ -58,6 +56,10 @@ const DEFAULTS: PixelOptions = {
   boardGrid: false,
   symbols: false,
 }
+
+// 文字模式内部使用的渲染倍率：source 按 textSize * TEXT_SCALE 渲染，
+// 再用 pixelSize=TEXT_SCALE 做像素化，使 textSize 直接对应输出字符高度（像素块）。
+const TEXT_SCALE = 8
 
 function useDark() {
   const [dark, setDark] = useState(() => {
@@ -113,30 +115,38 @@ export default function Home() {
     const c = document.createElement('canvas')
     const ctx = c.getContext('2d')!
     ctx.imageSmoothingEnabled = false
-    const charW = size * 0.6
-    const charH = size
+    const fontSize = size * TEXT_SCALE
+    const charW = fontSize * 0.6
+    const charH = fontSize
     const lines = text.split('\n')
     const maxLen = Math.max(...lines.map(l => l.length), 1)
-    c.width = Math.max(1, Math.ceil(maxLen * charW + size * 0.5))
-    c.height = Math.max(1, Math.ceil(lines.length * charH + size * 0.5))
+    c.width = Math.max(1, Math.ceil(maxLen * charW + fontSize * 0.5))
+    c.height = Math.max(1, Math.ceil(lines.length * charH + fontSize * 0.5))
     ctx.fillStyle = '#FFFFFF'
     ctx.fillRect(0, 0, c.width, c.height)
-    ctx.font = `bold ${size}px monospace`
+    ctx.font = `bold ${fontSize}px monospace`
     ctx.textBaseline = 'top'
     ctx.textAlign = 'left'
     if (palette.length > 1) {
+      // 用文本哈希决定起始偏移，让彩虹等配色结果可复现
+      let seed = 0
+      for (let i = 0; i < text.length; i++) seed = (seed * 31 + text.charCodeAt(i)) >>> 0
+      const nextColor = () => {
+        seed = (seed * 9301 + 49297) % 233280
+        return palette[Math.floor((seed / 233280) * palette.length)]
+      }
       lines.forEach((line, i) => {
-        let x = size * 0.2
+        let x = fontSize * 0.2
         for (const ch of line) {
-          ctx.fillStyle = palette[Math.floor(Math.random() * palette.length)]
-          ctx.fillText(ch, x, i * charH + size * 0.2)
+          ctx.fillStyle = nextColor()
+          ctx.fillText(ch, x, i * charH + fontSize * 0.2)
           x += ctx.measureText(ch).width
         }
       })
     } else {
-      ctx.fillStyle = '#000000'
+      ctx.fillStyle = palette[0] ?? '#000000'
       lines.forEach((line, i) => {
-        ctx.fillText(line, size * 0.2, i * charH + size * 0.2)
+        ctx.fillText(line, fontSize * 0.2, i * charH + fontSize * 0.2)
       })
     }
     return c
@@ -166,93 +176,31 @@ export default function Home() {
     if (!source || !canvasRef.current) return
     const view = canvasRef.current
 
-    if (mode === 'text') {
-      // Text mode: no pixelation — render text directly, quantize to palette
-      const tw = source instanceof HTMLCanvasElement ? source.width : (source as HTMLImageElement).naturalWidth
-      const th = source instanceof HTMLCanvasElement ? source.height : (source as HTMLImageElement).naturalHeight
-      const small = document.createElement('canvas')
-      small.width = tw; small.height = th
-      const sctx = small.getContext('2d')!
-      sctx.drawImage(source, 0, 0)
-      const img = sctx.getImageData(0, 0, tw, th)
-      const palette = opts.palette === 'auto'
-        ? medianCut(img.data, opts.colorCount)
-        : PALETTES[opts.palette as Exclude<PaletteId, 'auto'>].colors
-      applyPalette(img, palette, false)
-      sctx.putImageData(img, 0, 0)
-      // Draw grid
-      if (opts.grid) {
-        const gctx = small.getContext('2d')!
-        gctx.strokeStyle = 'rgba(0,0,0,0.18)'
-        gctx.lineWidth = 1
-        gctx.beginPath()
-        for (let x = 0; x <= tw; x++) { gctx.moveTo(x + 0.5, 0); gctx.lineTo(x + 0.5, th) }
-        for (let y = 0; y <= th; y++) { gctx.moveTo(0, y + 0.5); gctx.lineTo(tw, y + 0.5) }
-        gctx.stroke()
-      }
-      // Draw symbols
-      if (opts.symbols && palette.length > 0) {
-        const gctx2 = small.getContext('2d')!
-        const colorIndex = new Map(palette.map((c, i) => [`${c[0]},${c[1]},${c[2]}`, i + 1]))
-        const d2 = sctx.getImageData(0, 0, tw, th)
-        gctx2.textAlign = 'center'; gctx2.textBaseline = 'middle'
-        const fs = Math.max(7, Math.min(14, tw * 0.6))
-        gctx2.font = `bold ${fs}px monospace`
-        for (let py = 0; py < th; py++) {
-          for (let px = 0; px < tw; px++) {
-            const pi = (py * tw + px) * 4
-            const key = `${d2.data[pi]},${d2.data[pi+1]},${d2.data[pi+2]}`
-            const idx = colorIndex.get(key)
-            if (idx !== undefined) {
-              const lum = d2.data[pi] * 0.299 + d2.data[pi+1] * 0.587 + d2.data[pi+2] * 0.114
-              gctx2.fillStyle = lum > 128 ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.8)'
-              gctx2.fillText(String(idx), px + 0.5, py + 0.5)
-            }
-          }
-        }
-      }
-      resultCanvasRef.current = small
-      // Count colors
-      const colorMap = new Map<string, number>()
-      const fdata = sctx.getImageData(0, 0, tw, th)
-      for (let i = 0; i < fdata.data.length; i += 4) {
-        if (fdata.data[i+3] < 128) continue
-        const k = `${fdata.data[i]},${fdata.data[i+1]},${fdata.data[i+2]}`
-        colorMap.set(k, (colorMap.get(k) ?? 0) + 1)
-      }
-      const total = [...colorMap.values()].reduce((a, b) => a + b, 0) || 1
-      const counts: BeadCount[] = [...colorMap.entries()].map(([k, n]) => {
-        const [r, g, b] = k.split(',').map(Number)
-        return { color: [r, g, b] as [number, number, number], count: n, percentage: Math.round((n / total) * 1000) / 10 }
-      }).sort((a, b) => b.count - a.count)
-      setColorCounts(counts)
-      // Upscale to fill preview (at least textSize pixels per bead)
-      const maxW = view.parentElement?.clientWidth ?? 800
-      const upscale = Math.max(4, Math.floor(Math.min(maxW / tw, 600 / th)))
-      view.width = tw * upscale
-      view.height = th * upscale
-      const vctx = view.getContext('2d')!
-      vctx.imageSmoothingEnabled = false
-      vctx.drawImage(small, 0, 0, view.width, view.height)
-    } else {
-      // Image mode: full pixelation pipeline
-      const result = pixelate(source, opts)
-      resultCanvasRef.current = result.canvas
-      setColorCounts(result.colorCounts)
+    // 文字模式与图片模式统一走 pixelate 管线：
+    // 文字 source 按 textSize * TEXT_SCALE 渲染，再用 TEXT_SCALE 做像素化，
+    // 使 textSize 直接对应输出字符高度（像素块）。
+    const pixelOpts = mode === 'text' ? { ...opts, pixelSize: TEXT_SCALE } : opts
+    const result = pixelate(source, pixelOpts)
+    resultCanvasRef.current = result.canvas
+    setColorCounts(result.colorCounts)
 
-      const outCanvas = result.canvas
-      const maxW = view.parentElement?.clientWidth ?? 800
+    const outCanvas = showOriginal ? source : result.canvas
+    const maxW = view.parentElement?.clientWidth ?? 800
+
+    if (mode === 'text') {
+      // 文字输出尺寸较小，需要显著放大以便预览可读
+      const upscale = Math.max(4, Math.floor(Math.min(maxW / outCanvas.width, 600 / outCanvas.height)))
+      view.width = outCanvas.width * upscale
+      view.height = outCanvas.height * upscale
+    } else {
       const scale = Math.min(1, maxW / outCanvas.width)
       view.width = Math.round(outCanvas.width * scale)
       view.height = Math.round(outCanvas.height * scale)
-      const ctx = view.getContext('2d')!
-      ctx.imageSmoothingEnabled = false
-      if (showOriginal) {
-        ctx.drawImage(source, 0, 0, view.width, view.height)
-      } else {
-        ctx.drawImage(outCanvas, 0, 0, view.width, view.height)
-      }
     }
+
+    const ctx = view.getContext('2d')!
+    ctx.imageSmoothingEnabled = false
+    ctx.drawImage(outCanvas, 0, 0, view.width, view.height)
   }, [source, opts, showOriginal, mode])
 
   const loadFile = useCallback((file: File) => {
@@ -494,7 +442,8 @@ export default function Home() {
                     <span
                       key={i}
                       className="h-4 w-4 rounded-sm border border-black/20 dark:border-black/40"
-                      style={{ backgroundColor: `rgb(${c[0]},${c[1]},${c[2]})` }}
+                      style={{ backgroundColor: `rgb(${c.color[0]},${c.color[1]},${c.color[2]})` }}
+                      title={`${c.name}${c.code ? ` · ${c.code}` : ''}`}
                     />
                   ))}
                 </div>
@@ -609,8 +558,9 @@ export default function Home() {
 
           {colorCounts.length > 0 && (() => {
             const isAuto = opts.palette === 'auto'
-            const palette = isAuto ? colorCounts.map(c => c.color) : PALETTES[opts.palette as Exclude<PaletteId, 'auto'>].colors
-            const subs = isAuto ? new Map() : getSubstitutions(palette)
+            const palette = isAuto ? colorCounts.map(c => ({ name: '', color: c.color, code: undefined })) : PALETTES[opts.palette as Exclude<PaletteId, 'auto'>].colors
+            const subs = isAuto ? new Map() : getSubstitutions(palette.map(c => c.color))
+            const paletteByKey = new Map(palette.map(c => [`${c.color[0]},${c.color[1]},${c.color[2]}`, c]))
             return (
             <div className="rounded-xl border border-[#E5E0D8] dark:border-zinc-800 bg-white dark:bg-zinc-900/60 p-5 shadow-sm">
               <div className="flex items-center gap-2 text-sm font-semibold text-[#6B6560] dark:text-zinc-300 mb-3">
@@ -623,14 +573,19 @@ export default function Home() {
                 {colorCounts.map((bc, i) => {
                   const key = `${bc.color[0]},${bc.color[1]},${bc.color[2]}`
                   const sub = subs.get(key)
+                  const paletteColor = paletteByKey.get(key)
                   return (
                   <div key={i} className="flex items-center gap-2 text-xs">
                     <span
                       className="h-4 w-4 rounded-sm border border-black/10 dark:border-white/10 shrink-0"
                       style={{ backgroundColor: `rgb(${bc.color[0]},${bc.color[1]},${bc.color[2]})` }}
+                      title={paletteColor?.name}
                     />
                     <span className="text-[#6B6560] dark:text-zinc-400 w-7 text-right font-mono">{bc.count}</span>
                     <span className="text-[#8B857D] dark:text-zinc-500">{bc.percentage}%</span>
+                    {paletteColor?.code && (
+                      <span className="text-[10px] text-amber-600 dark:text-fuchsia-400 font-mono">{paletteColor.code}</span>
+                    )}
                     {sub && (
                       <span className="ml-auto text-[#8B857D] dark:text-zinc-600 flex items-center gap-1">
                         缺货用 →

@@ -26,101 +26,107 @@ export interface PixelOptions {
 
 type RGB = [number, number, number]
 
-export const PALETTES: Record<Exclude<PaletteId, 'auto'>, { name: string; colors: RGB[] }> = {
+export interface PaletteColor {
+  name: string
+  color: RGB
+  code?: string // 拼豆等品牌的色号，如 P18、P80
+}
+
+export const PALETTES: Record<Exclude<PaletteId, 'auto'>, { name: string; colors: PaletteColor[] }> = {
   gameboy: {
     name: 'Game Boy',
     colors: [
-      [15, 56, 15],
-      [48, 98, 48],
-      [139, 172, 15],
-      [155, 188, 15],
+      { name: 'Darkest Green', color: [15, 56, 15] },
+      { name: 'Dark Green', color: [48, 98, 48] },
+      { name: 'Light Green', color: [139, 172, 15] },
+      { name: 'Lightest Green', color: [155, 188, 15] },
     ],
   },
   nes: {
     name: '红白机 NES',
     colors: [
-      [0, 0, 0],
-      [252, 252, 252],
-      [128, 128, 128],
-      [248, 56, 0],
-      [252, 160, 68],
-      [248, 184, 0],
-      [0, 168, 0],
-      [0, 120, 248],
-      [60, 60, 255],
-      [188, 40, 188],
-      [248, 120, 136],
-      [0, 232, 216],
+      { name: 'Black', color: [0, 0, 0] },
+      { name: 'White', color: [252, 252, 252] },
+      { name: 'Grey', color: [128, 128, 128] },
+      { name: 'Red', color: [248, 56, 0] },
+      { name: 'Orange', color: [252, 160, 68] },
+      { name: 'Yellow', color: [248, 184, 0] },
+      { name: 'Green', color: [0, 168, 0] },
+      { name: 'Blue', color: [0, 120, 248] },
+      { name: 'Indigo', color: [60, 60, 255] },
+      { name: 'Purple', color: [188, 40, 188] },
+      { name: 'Pink', color: [248, 120, 136] },
+      { name: 'Cyan', color: [0, 232, 216] },
     ],
   },
   gray: {
     name: '黑白灰阶',
     colors: Array.from({ length: 8 }, (_, i) => {
       const v = Math.round((i / 7) * 255)
-      return [v, v, v] as RGB
+      return { name: `Gray ${i + 1}`, color: [v, v, v] as RGB }
     }),
   },
   sepia: {
     name: '复古棕褐',
     colors: [
-      [46, 27, 13],
-      [96, 64, 32],
-      [150, 108, 60],
-      [200, 160, 104],
-      [232, 204, 160],
-      [250, 238, 210],
+      { name: 'Sepia 1', color: [46, 27, 13] },
+      { name: 'Sepia 2', color: [96, 64, 32] },
+      { name: 'Sepia 3', color: [150, 108, 60] },
+      { name: 'Sepia 4', color: [200, 160, 104] },
+      { name: 'Sepia 5', color: [232, 204, 160] },
+      { name: 'Sepia 6', color: [250, 238, 210] },
     ],
   },
   vaporwave: {
     name: '蒸汽波',
     colors: [
-      [13, 2, 33],
-      [67, 17, 102],
-      [148, 22, 127],
-      [255, 113, 206],
-      [1, 205, 254],
-      [5, 255, 161],
-      [185, 103, 255],
-      [255, 251, 150],
+      { name: 'Deep Purple', color: [13, 2, 33] },
+      { name: 'Purple', color: [67, 17, 102] },
+      { name: 'Magenta', color: [148, 22, 127] },
+      { name: 'Pink', color: [255, 113, 206] },
+      { name: 'Cyan', color: [1, 205, 254] },
+      { name: 'Mint', color: [5, 255, 161] },
+      { name: 'Lavender', color: [185, 103, 255] },
+      { name: 'Yellow', color: [255, 251, 150] },
     ],
   },
   perler: {
     name: '拼豆 Perler',
     colors: [
-      [50, 50, 52],      // Black 黑色
-      [234, 239, 238],   // White 白色
-      [144, 148, 151],   // Grey 灰色
-      [88, 92, 97],      // Dark Grey 深灰
-      [179, 186, 184],   // Light Grey 浅灰
-      [176, 53, 60],     // Red 红色
-      [157, 43, 58],     // Cherry 深红
-      [209, 67, 55],     // Tomato 番茄红
-      [235, 123, 49],    // Orange 橙色
-      [251, 177, 70],    // Cheddar 芝士黄
-      [231, 206, 62],    // Yellow 黄色
-      [233, 226, 144],   // Pastel Yellow 淡黄
-      [225, 226, 187],   // Creme 奶油
-      [77, 171, 100],    // Green 绿色
-      [0, 123, 78],      // Dark Green 深绿
-      [105, 184, 69],    // Kiwi Lime 青柠
-      [127, 151, 26],    // Fern 草绿
-      [14, 80, 146],     // Dark Blue 深蓝
-      [39, 140, 201],    // Light Blue 浅蓝
-      [74, 156, 207],    // Pastel Blue 淡蓝
-      [0, 152, 197],     // Turquoise 青蓝
-      [150, 209, 212],   // Toothpaste 牙膏绿
-      [104, 75, 134],    // Purple 紫色
-      [175, 159, 206],   // Lavender 淡紫
-      [147, 127, 191],   // Pastel Lavender 浅紫
-      [212, 84, 150],    // Pink 粉色
-      [216, 114, 154],   // Bubblegum 泡泡糖
-      [242, 175, 183],   // Flamingo 火烈鸟
-      [224, 66, 132],    // Magenta 品红
-      [103, 76, 68],     // Brown 棕色
-      [147, 104, 72],    // Light Brown 浅棕
-      [197, 172, 144],   // Tan 褐色
-      [233, 191, 185],   // Peach 肤色
-      [222, 218, 206],   // Toasted Marshmallow 米白
+      { code: 'P18', name: 'Black 黑色', color: [50, 50, 52] },
+      { code: 'P01', name: 'White 白色', color: [234, 239, 238] },
+      { code: 'P17', name: 'Grey 灰色', color: [144, 148, 151] },
+      { code: 'P92', name: 'Dark Grey 深灰', color: [88, 92, 97] },
+      { code: 'P181', name: 'Light Grey 浅灰', color: [179, 186, 184] },
+      { code: 'P05', name: 'Red 红色', color: [176, 53, 60] },
+      { code: 'P961', name: 'Cherry 深红', color: [157, 43, 58] },
+      { code: 'P211', name: 'Tomato 番茄红', color: [209, 67, 55] },
+      { code: 'P04', name: 'Orange 橙色', color: [235, 123, 49] },
+      { code: 'P57', name: 'Cheddar 芝士黄', color: [251, 177, 70] },
+      { code: 'P03', name: 'Yellow 黄色', color: [231, 206, 62] },
+      { code: 'P56', name: 'Pastel Yellow 淡黄', color: [233, 226, 144] },
+      { code: 'P02', name: 'Creme 奶油', color: [225, 226, 187] },
+      { code: 'P80', name: 'Bright Green 亮绿', color: [77, 171, 100] },
+      { code: 'P10', name: 'Dark Green 深绿', color: [0, 123, 78] },
+      { code: 'P61', name: 'Kiwi Lime 青柠', color: [105, 184, 69] },
+      { code: 'P219', name: 'Fern 草绿', color: [127, 151, 26] },
+      { code: 'P08', name: 'Dark Blue 深蓝', color: [14, 80, 146] },
+      { code: 'P09', name: 'Light Blue 浅蓝', color: [39, 140, 201] },
+      { code: 'P52', name: 'Pastel Blue 淡蓝', color: [74, 156, 207] },
+      { code: 'P62', name: 'Turquoise 青蓝', color: [0, 152, 197] },
+      { code: 'P58', name: 'Toothpaste 牙膏绿', color: [150, 209, 212] },
+      { code: 'P07', name: 'Purple 紫色', color: [104, 75, 134] },
+      { code: 'P182', name: 'Lavender 淡紫', color: [175, 159, 206] },
+      { code: 'P54', name: 'Pastel Lavender 浅紫', color: [147, 127, 191] },
+      { code: 'P83', name: 'Pink 粉色', color: [212, 84, 150] },
+      { code: 'P06', name: 'Bubblegum 泡泡糖', color: [216, 114, 154] },
+      { code: 'P203', name: 'Flamingo 火烈鸟', color: [242, 175, 183] },
+      { code: 'P38', name: 'Magenta 品红', color: [224, 66, 132] },
+      { code: 'P12', name: 'Brown 棕色', color: [103, 76, 68] },
+      { code: 'P21', name: 'Light Brown 浅棕', color: [147, 104, 72] },
+      { code: 'P35', name: 'Tan 褐色', color: [197, 172, 144] },
+      { code: 'P33', name: 'Peach 肤色', color: [233, 191, 185] },
+      { code: 'P208', name: 'Toasted Marshmallow 米白', color: [222, 218, 206] },
     ],
   },
 }
@@ -275,10 +281,10 @@ export function pixelate(source: HTMLImageElement | HTMLCanvasElement, opts: Pix
 
   // 2. 量化
   const img = sctx.getImageData(0, 0, pw, ph)
-  const palette =
+  const palette: RGB[] =
     opts.palette === 'auto'
       ? medianCut(img.data, opts.colorCount)
-      : PALETTES[opts.palette].colors
+      : PALETTES[opts.palette].colors.map((c) => c.color)
   applyPalette(img, palette, opts.dither)
 
   // 颜色限制：只保留出现最多的 N 种颜色
