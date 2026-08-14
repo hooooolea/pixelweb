@@ -130,6 +130,8 @@ export default function Home() {
     ctx.textAlign = 'center'
     const centerX = c.width / 2
     const lineH = charH
+    // 文本块（lines*charH）在画布内垂直居中：画布高度多出的 0.5*fontSize 上下各分一半
+    const topPad = fontSize * 0.25
     if (palette.length > 1) {
       // 用文本哈希决定起始偏移，让彩虹等配色结果可复现
       let seed = 0
@@ -141,7 +143,7 @@ export default function Home() {
       lines.forEach((line, i) => {
         const lineWidth = ctx.measureText(line).width
         let x = centerX - lineWidth / 2
-        const y = i * lineH + lineH / 2
+        const y = topPad + i * lineH + lineH / 2
         for (const ch of line) {
           ctx.fillStyle = nextColor()
           ctx.fillText(ch, x, y)
@@ -151,7 +153,7 @@ export default function Home() {
     } else {
       ctx.fillStyle = palette[0] ?? '#000000'
       lines.forEach((line, i) => {
-        ctx.fillText(line, centerX, i * lineH + lineH / 2)
+        ctx.fillText(line, centerX, topPad + i * lineH + lineH / 2)
       })
     }
     // 阈值处理去掉抗锯齿：透明/半透明像素 → 纯白背景，否则 → 保留颜色且完全不透明
