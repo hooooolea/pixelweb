@@ -102,6 +102,7 @@ export default function Home() {
   const [exportScale, setExportScale] = useState('1')
   const [dark, toggleDark] = useDark()
   const [mode, setMode] = useState<'image' | 'text'>('image')
+  const [textShowPixel, setTextShowPixel] = useState(false)
   const [textInput, setTextInput] = useState('HELLO')
   const [textSize, setTextSize] = useState(14)
   const [textColors, setTextColors] = useState<'bw' | 'rainbow' | 'morandi' | 'contrast' | 'candy' | 'forest'>('bw')
@@ -199,7 +200,9 @@ export default function Home() {
     resultCanvasRef.current = result.canvas
     setColorCounts(result.colorCounts)
 
-    const outCanvas = showOriginal ? source : result.canvas
+    const outCanvas = mode === 'text'
+      ? (textShowPixel ? result.canvas : source)
+      : (showOriginal ? source : result.canvas)
     const maxW = view.parentElement?.clientWidth ?? 800
 
     if (mode === 'text') {
@@ -217,7 +220,7 @@ export default function Home() {
     const ctx = view.getContext('2d')!
     ctx.imageSmoothingEnabled = false
     ctx.drawImage(outCanvas, 0, 0, view.width, view.height)
-  }, [source, opts, showOriginal, mode])
+  }, [source, opts, showOriginal, mode, textShowPixel])
 
   // 图片模式下自动估算合理颜色数
   useEffect(() => {
@@ -413,6 +416,10 @@ export default function Home() {
                       </button>
                     ))}
                   </div>
+                </div>
+                <div className="mt-3 flex items-center justify-between">
+                  <Label className="text-xs text-[#6B6560] dark:text-zinc-400">拼豆/像素预览</Label>
+                  <Switch checked={textShowPixel} onCheckedChange={(v) => setTextShowPixel(v)} />
                 </div>
               </>
             )}
@@ -655,20 +662,22 @@ export default function Home() {
               ref={canvasRef}
               className="relative z-10 max-h-[70vh] max-w-full select-none"
               style={{ imageRendering: 'pixelated' }}
-              onMouseDown={() => setShowOriginal(true)}
-              onMouseUp={() => setShowOriginal(false)}
-              onMouseLeave={() => setShowOriginal(false)}
-              onTouchStart={() => setShowOriginal(true)}
-              onTouchEnd={() => setShowOriginal(false)}
+              onMouseDown={() => mode === 'image' && setShowOriginal(true)}
+              onMouseUp={() => mode === 'image' && setShowOriginal(false)}
+              onMouseLeave={() => mode === 'image' && setShowOriginal(false)}
+              onTouchStart={() => mode === 'image' && setShowOriginal(true)}
+              onTouchEnd={() => mode === 'image' && setShowOriginal(false)}
             />
           ) : (
             <p className="relative z-10 text-[#8B857D] dark:text-zinc-500">加载中…</p>
           )}
 
+          {mode === 'image' && (
           <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full border border-[#D4CDC3] dark:border-zinc-700 bg-white/90 dark:bg-zinc-950/90 px-4 py-1.5 text-xs text-[#6B6560] dark:text-zinc-400 shadow-sm">
             <Eye className="h-3.5 w-3.5" />
             {showOriginal ? '原图' : '按住图片可查看原图'}
           </div>
+          )}
 
           {dragOver && (
             <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center">
