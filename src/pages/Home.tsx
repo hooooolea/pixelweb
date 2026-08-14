@@ -28,6 +28,7 @@ import {
 } from 'lucide-react'
 import {
   createSampleImage,
+  estimateColorCount,
   getSubstitutions,
   pixelate,
   PALETTES,
@@ -213,6 +214,14 @@ export default function Home() {
     ctx.imageSmoothingEnabled = false
     ctx.drawImage(outCanvas, 0, 0, view.width, view.height)
   }, [source, opts, showOriginal, mode])
+
+  // 图片模式下自动估算合理颜色数
+  useEffect(() => {
+    if (mode === 'image' && source && opts.palette === 'auto') {
+      const n = estimateColorCount(source)
+      setOpts((o) => ({ ...o, colorCount: n }))
+    }
+  }, [source, mode, opts.palette])
 
   const loadFile = useCallback((file: File) => {
     if (!file.type.startsWith('image/')) return
@@ -469,7 +478,7 @@ export default function Home() {
                 </div>
                 <Slider
                   min={2}
-                  max={64}
+                  max={32}
                   step={1}
                   value={[opts.colorCount]}
                   onValueChange={([v]) => set('colorCount', v)}

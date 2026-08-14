@@ -152,6 +152,38 @@ function nearestColor(palette: RGB[], r: number, g: number, b: number): RGB {
   return best
 }
 
+/** 估算图片的合理颜色数（用于自动模式的智能默认值），返回 2–32 之间 */
+export function estimateColorCount(source: HTMLImageElement | HTMLCanvasElement): number {
+  const sw = source instanceof HTMLImageElement ? source.naturalWidth : source.width
+  const sh = source instanceof HTMLImageElement ? source.naturalHeight : source.height
+  // 缩小到小尺寸再统计
+  const c = document.createElement('canvas')
+  const scale = Math.min(1, 64 / Math.max(sw, sh))
+  c.width = Math.max(1, Math.round(sw * scale))
+  c.height = Math.max(1, Math.round(sh * scale))
+  const ctx = c.getContext('2d', { willReadFrequently: true })!
+  ctx.drawImage(source, 0, 0, c.width, c.height)
+  const data = ctx.getImageData(0, 0, c.width, c.height).data
+  const colors = new Set<number>()
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] < 128) continue
+    // 量化到 4 bit/通道，减少噪声
+    const r = (data[i] >> 4) & 0xf
+    const g = (data[i + 1] >> 4) & 0xf
+    const b = (data[i + 2] >> 4) & 0xf
+    colors.add((r << 8) | (g << 4) | b)
+  }
+  // 直接映射到合理范围：颜色越少给越细，越多给越粗，上限 32
+  const n = colors.size
+  if (n <= 2) return 2
+  if (n <= 4) return n
+  if (n <= 8) return 8
+  if (n <= 12) return 12
+  if (n <= 16) return 16
+  if (n <= 24) return 24
+  return 32
+}
+
 /** 中位切分法颜色量化：从图像中提取 n 个代表色 */
 export function medianCut(data: Uint8ClampedArray, n: number): RGB[] {
   const pixels: RGB[] = []
