@@ -113,7 +113,7 @@ export default function Home() {
 
   const renderTextToCanvas = useCallback((text: string, size: number, palette: string[]): HTMLCanvasElement => {
     const c = document.createElement('canvas')
-    const ctx = c.getContext('2d')!
+    const ctx = c.getContext('2d', { willReadFrequently: true })!
     ctx.imageSmoothingEnabled = false
     const fontSize = size * TEXT_SCALE
     const charW = fontSize * 0.6
@@ -122,8 +122,8 @@ export default function Home() {
     const maxLen = Math.max(...lines.map(l => l.length), 1)
     c.width = Math.max(1, Math.ceil(maxLen * charW + fontSize * 0.5))
     c.height = Math.max(1, Math.ceil(lines.length * charH + fontSize * 0.5))
-    ctx.fillStyle = '#FFFFFF'
-    ctx.fillRect(0, 0, c.width, c.height)
+    // 透明背景，先画文字（避免白底与文字混合产生灰色抗锯齿边）
+    ctx.clearRect(0, 0, c.width, c.height)
     ctx.font = `bold ${fontSize}px monospace`
     ctx.textBaseline = 'top'
     ctx.textAlign = 'left'
@@ -149,6 +149,17 @@ export default function Home() {
         ctx.fillText(line, fontSize * 0.2, i * charH + fontSize * 0.2)
       })
     }
+    // 阈值处理去掉抗锯齿：透明/半透明像素 → 纯白背景，否则 → 保留颜色且完全不透明
+    const idata = ctx.getImageData(0, 0, c.width, c.height)
+    const d = idata.data
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i + 3] < 128) {
+        d[i] = 255; d[i + 1] = 255; d[i + 2] = 255; d[i + 3] = 255
+      } else {
+        d[i + 3] = 255
+      }
+    }
+    ctx.putImageData(idata, 0, 0)
     return c
   }, [])
 
