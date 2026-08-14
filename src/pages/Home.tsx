@@ -131,7 +131,7 @@ export default function Home() {
     const centerX = c.width / 2
     const lineH = charH
     // 文本块（lines*charH）在画布内垂直居中：画布高度多出的 0.5*fontSize 上下各分一半
-    const topPad = fontSize * 0.25
+    const topPad = fontSize * 0.35
     if (palette.length > 1) {
       // 用文本哈希决定起始偏移，让彩虹等配色结果可复现
       let seed = 0
